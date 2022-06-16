@@ -8,6 +8,8 @@ import (
 
 	"github.com/msaf1980/carbon-clickhouse-loader/pkg/driver"
 	driver_mail_ru "github.com/msaf1980/carbon-clickhouse-loader/pkg/driver/mail_ru"
+	driver_native "github.com/msaf1980/carbon-clickhouse-loader/pkg/driver/native"
+	driver_std "github.com/msaf1980/carbon-clickhouse-loader/pkg/driver/std"
 	"github.com/tevino/abool/v2"
 )
 
@@ -85,6 +87,14 @@ func NewMetricIndexStore(chDriver ChDriver, address, plainTable, taggedTable str
 	case ChDriverMailRu:
 		if len(taggedTable) > 0 {
 			taggedDriver = driver_mail_ru.NewTaggedDriver(address, taggedTable, flushSize)
+		}
+	case ChDriverStd:
+		if len(taggedTable) > 0 {
+			taggedDriver = driver_std.NewTaggedDriver(address, taggedTable, flushSize)
+		}
+	case ChDriverNative:
+		if len(taggedTable) > 0 {
+			taggedDriver = driver_native.NewTaggedDriver(address, taggedTable, flushSize)
 		}
 	default:
 		return nil, fmt.Errorf("driver not supported: %s", chDriver.String())

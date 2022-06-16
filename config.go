@@ -10,9 +10,11 @@ type ChDriver int16
 const (
 	ChDriverRowBinary ChDriver = iota
 	ChDriverMailRu
+	ChDriverStd    // clickhouse-go with database/sql interface
+	ChDriverNative // clickhouse-go with native interface
 )
 
-var driverStrings []string = []string{"rowbin", "mail.ru"}
+var driverStrings []string = []string{"rowbin", "mail.ru", "std", "native"}
 
 func (a *ChDriver) Set(value string) error {
 	switch value {
@@ -20,6 +22,10 @@ func (a *ChDriver) Set(value string) error {
 		*a = ChDriverRowBinary
 	case "mail.ru":
 		*a = ChDriverMailRu
+	case "std":
+		*a = ChDriverStd
+	case "native":
+		*a = ChDriverNative
 	default:
 		return fmt.Errorf("invalid clickhouse driver %s", value)
 	}
