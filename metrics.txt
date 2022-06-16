@@ -1,0 +1,6 @@
+cpu.loadavg;env=test;host=host1
+cpu.loadavg;env=test;host=host2
+cpu.loadavg;env=prod;host=dc1-host1
+cpu.loadavg;env=prod;host=dc1-host2
+cpu.loadavg;env=prod;host=dc2-host1
+cpu.loadavg;env=prod;host=dc2-host2
