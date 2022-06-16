@@ -68,7 +68,7 @@ func (d *TaggedDriver) Flush() (time.Duration, uint, error) {
 	var n uint
 	start := time.Now()
 	if d.size > 0 {
-		connect, err := sql.Open("chhttp", "http://127.0.0.1:8123/default")
+		connect, err := sql.Open("chhttp", d.address)
 		if err != nil {
 			return 0, 0, err
 		}
