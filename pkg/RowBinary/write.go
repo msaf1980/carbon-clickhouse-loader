@@ -21,11 +21,16 @@ func Date(year int, month time.Month, day int) uint16 {
 
 type Writer struct {
 	wrapped io.Writer
-	buffer  [265]byte
+	buffer  [SIZE_INT64]byte
 }
 
 func NewWriter(w io.Writer) *Writer {
 	return &Writer{wrapped: w}
+}
+
+func (w *Writer) Write(value []byte) error {
+	_, err := w.wrapped.Write(value)
+	return err
 }
 
 func (w *Writer) WriteDate(value time.Time) error {
