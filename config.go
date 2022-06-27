@@ -12,9 +12,10 @@ const (
 	ChDriverMailRu
 	ChDriverStd    // clickhouse-go with database/sql interface
 	ChDriverNative // clickhouse-go with native interface
+	ChDriverCol    // columnar interface with github.com/vahid-sohrabloo/chconn
 )
 
-var driverStrings []string = []string{"rowbin", "mail.ru", "std", "native"}
+var driverStrings []string = []string{"rowbin", "mail.ru", "std", "native", "columnar"}
 
 func (a *ChDriver) Set(value string) error {
 	switch value {
@@ -26,6 +27,8 @@ func (a *ChDriver) Set(value string) error {
 		*a = ChDriverStd
 	case "native":
 		*a = ChDriverNative
+	case "columnar":
+		*a = ChDriverCol
 	default:
 		return fmt.Errorf("invalid clickhouse driver %s", value)
 	}

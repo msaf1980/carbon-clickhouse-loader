@@ -1,15 +1,17 @@
 package mailru
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
 	"os"
 	"time"
 
-	_ "github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/msaf1980/carbon-clickhouse-loader/pkg/driver"
 	"github.com/msaf1980/carbon-clickhouse-loader/pkg/tags"
 	"github.com/tevino/abool"
+	"github.com/vahid-sohrabloo/chconn"
+	"github.com/vahid-sohrabloo/chconn/column"
+	// "github.com/vahid-sohrabloo/chconn/column"
 )
 
 type TaggedDriver struct {
@@ -26,7 +28,7 @@ type TaggedDriver struct {
 
 func NewTaggedDriver(address, table string, flushSize uint) (*TaggedDriver, error) {
 	if len(address) == 0 {
-		address = "127.0.0.1:9000"
+		address = "clickhouse://127.0.0.1:9000/default"
 	}
 	return &TaggedDriver{
 		address:   address,
@@ -68,42 +70,43 @@ func (d *TaggedDriver) Flush() (time.Duration, uint, error) {
 	var n uint
 	start := time.Now()
 	if d.size > 0 {
-		conn, err := sql.Open("clickhouse", "clickhouse://"+d.address)
-		if err != nil {
-			return 0, 0, err
-		}
-		tx, err := conn.Begin()
-		if err != nil {
-			return 0, 0, err
-		}
-		batch, err := tx.Prepare("INSERT INTO " + d.table + " (Date, Tag1, Path, Tags, Version)")
+		ctx := context.Background()
+		conn, err := chconn.Connect(ctx, d.address)
 		if err != nil {
 			return 0, 0, err
 		}
 
 		// fmt.Println("FLUSH")
+		dateCols := column.NewDate(false)
+		tag1Cols := column.NewString(false)
+		pathCols := column.NewString(false)
+		versionCols := column.NewUint32(false)
+
+		tagsValues := column.NewString(false)
+		tagsCols := column.NewArray(tagsValues)
+
 		for _, m := range d.metrics {
 			if path, tags, err := tags.TagsParse(m.Metric); err != nil {
 				fmt.Fprintf(os.Stderr, "invalid metric '%s': %v", m.Metric, err)
 			} else {
 				// fmt.Printf("%s %+v %v\n", name, tags, m.Date)
 				for _, tag1 := range tags {
-					if _, err := batch.Exec(
-						m.Date,
-						tag1,
-						path,
-						tags,
-						uint32(0),
-					); err != nil {
-						return time.Since(start), 0, err
+					dateCols.Append(m.Date)
+					tag1Cols.AppendString(tag1)
+					pathCols.AppendString(path)
+					versionCols.Append(0)
+					tagsCols.AppendLen(len(tags))
+					for _, tag := range tags {
+						tagsValues.AppendString(tag)
 					}
 				}
 				n++
 			}
 		}
 
-		if err := tx.Commit(); err != nil {
-			return time.Since(start), 0, err
+		err = conn.Insert(ctx, "INSERT INTO "+d.table+" (Date, Tag1, Path, Tags, Version) VALUES", dateCols, tag1Cols, pathCols, tagsCols, versionCols)
+		if err != nil {
+			return 0, 0, err
 		}
 
 		d.metrics = d.metrics[:0]

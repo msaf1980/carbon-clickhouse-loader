@@ -24,7 +24,7 @@ type TaggedDriver struct {
 	isRunning *abool.AtomicBool
 }
 
-func NewTaggedDriver(address, table string, flushSize uint) *TaggedDriver {
+func NewTaggedDriver(address, table string, flushSize uint) (*TaggedDriver, error) {
 	if len(address) == 0 {
 		address = "http://127.0.0.1:8123/default"
 	}
@@ -36,7 +36,7 @@ func NewTaggedDriver(address, table string, flushSize uint) *TaggedDriver {
 			[]driver.MetricIndex,
 			0, flushSize/100, // some evristic: size / avg metric length
 		),
-	}
+	}, nil
 }
 
 func (d *TaggedDriver) Queued() uint {

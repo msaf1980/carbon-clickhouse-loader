@@ -11,4 +11,5 @@ require (
 	github.com/stretchr/testify v1.7.2
 	github.com/tevino/abool v1.2.0
 	github.com/tevino/abool/v2 v2.1.0
+	github.com/vahid-sohrabloo/chconn v1.3.12
 )

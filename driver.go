@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/msaf1980/carbon-clickhouse-loader/pkg/driver"
+	driver_col "github.com/msaf1980/carbon-clickhouse-loader/pkg/driver/columnar"
 	driver_mail_ru "github.com/msaf1980/carbon-clickhouse-loader/pkg/driver/mail_ru"
 	driver_native "github.com/msaf1980/carbon-clickhouse-loader/pkg/driver/native"
 	driver_rowbin "github.com/msaf1980/carbon-clickhouse-loader/pkg/driver/rowbin"
@@ -83,26 +84,37 @@ func (bg *MetricIndexStore) FlushInit() {
 }
 
 func NewMetricIndexStore(chDriver ChDriver, address, plainTable, taggedTable string, flushSize uint, isRunning *abool.AtomicBool) (*MetricIndexStore, error) {
-	var taggedDriver driver.Driver
+	var (
+		taggedDriver driver.Driver
+		err          error
+	)
+
 	switch chDriver {
 	case ChDriverMailRu:
 		if len(taggedTable) > 0 {
-			taggedDriver = driver_mail_ru.NewTaggedDriver(address, taggedTable, flushSize)
+			taggedDriver, err = driver_mail_ru.NewTaggedDriver(address, taggedTable, flushSize)
 		}
 	case ChDriverStd:
 		if len(taggedTable) > 0 {
-			taggedDriver = driver_std.NewTaggedDriver(address, taggedTable, flushSize)
+			taggedDriver, err = driver_std.NewTaggedDriver(address, taggedTable, flushSize)
 		}
 	case ChDriverNative:
 		if len(taggedTable) > 0 {
-			taggedDriver = driver_native.NewTaggedDriver(address, taggedTable, flushSize)
+			taggedDriver, err = driver_native.NewTaggedDriver(address, taggedTable, flushSize)
 		}
 	case ChDriverRowBinary:
 		if len(taggedTable) > 0 {
-			taggedDriver = driver_rowbin.NewTaggedDriver(address, taggedTable, flushSize)
+			taggedDriver, err = driver_rowbin.NewTaggedDriver(address, taggedTable, flushSize)
+		}
+	case ChDriverCol:
+		if len(taggedTable) > 0 {
+			taggedDriver, err = driver_col.NewTaggedDriver(address, taggedTable, flushSize)
 		}
 	default:
 		return nil, fmt.Errorf("driver not supported: %s", chDriver.String())
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	drv := &MetricIndexStore{
